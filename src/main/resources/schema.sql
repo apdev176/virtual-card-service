@@ -1,0 +1,17 @@
+-- DDL for Cards Table
+CREATE TABLE IF NOT EXISTS cards (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cardholder_name VARCHAR(255) NOT NULL,
+    balance DECIMAL(19, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- DDL for Transactions Table
+CREATE TABLE IF NOT EXISTS card_transactions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    card_id BIGINT NOT NULL,
+    amount DECIMAL(19, 2) NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('DEBIT', 'CREDIT')),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (card_id) REFERENCES cards(id)
+);
