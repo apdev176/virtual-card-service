@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS cards (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cardholder_name VARCHAR(255) NOT NULL,
     balance DECIMAL(19, 2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version BIGINT -- Required for Optimistic Locking
 );
 
 -- DDL for Transactions Table

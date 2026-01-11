@@ -30,4 +30,7 @@ public class Card {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    // Optimistic Locking for Concurrency Control
+    @Version
+    private Long version;
 }
