@@ -1,4 +1,4 @@
-package com.nium.virtual.card.service;
+package com.company.virtual.card.service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
