@@ -3,10 +3,14 @@ package com.company.virtual.card.service.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,7 +56,41 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Transaction conflict. Please try again."));
     }
 
-    // 5. Catch-All for unexpected server errors
+    // 5. Handle URL Parameter Type Mismatch (e.g., /cards/abc instead of /cards/1)
+    // Returns HTTP 400 Bad Request
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Parameter type mismatch: {} should be of type {}", ex.getName(), ex.getRequiredType().getSimpleName());
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "Invalid value for parameter '" + ex.getName() + "'. Expected type: " + ex.getRequiredType().getSimpleName()
+        ));
+    }
+
+    // 6. Handle Malformed JSON (e.g., missing commas, wrong data types in body)
+    // Returns HTTP 400 Bad Request
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleMalformedJson(HttpMessageNotReadableException ex) {
+        log.warn("Malformed JSON request: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(Map.of("error", "Malformed JSON request. Please check request body formatting."));
+    }
+
+    // 7. NEW: Wrong HTTP Method (e.g. DELETE /cards) - Returns 405
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        log.warn("Method not allowed: {} for URL", ex.getMethod());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(Map.of("error", "HTTP Method " + ex.getMethod() + " is not supported for this endpoint."));
+    }
+
+    // 8. NEW: Wrong Content Type (e.g. sending XML) - Returns 415
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Map<String, String>> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        log.warn("Unsupported Media Type: {}", ex.getContentType());
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(Map.of("error", "Media type not supported. Please use application/json"));
+    }
+
+    // 9. Catch-All for unexpected server errors
     // Returns HTTP 500 Internal Server Error
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
