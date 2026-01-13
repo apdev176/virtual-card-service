@@ -1,6 +1,5 @@
 package com.company.virtual.card.service.dto;
 
-import com.company.virtual.card.service.enums.TransactionType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,17 +13,17 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionResponse {
-    
+public class CardResponse {
+
     @JsonProperty("id")
     private Long id;
-    
-    @JsonProperty("amount")
-    private BigDecimal amount;
-    
-    @JsonProperty("type")
-    private TransactionType type;
-    
-    @JsonProperty("timestamp")
-    private Instant timestamp;
+
+    @JsonProperty("cardholderName")
+    private String cardholderName;
+
+    @JsonProperty("balance")
+    private BigDecimal balance;
+
+    @JsonProperty("createdAt")
+    private Instant createdAt;
 }

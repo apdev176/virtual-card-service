@@ -1,18 +1,20 @@
 package com.company.virtual.card.service.controller;
 
+import com.company.virtual.card.service.dto.CardResponse;
 import com.company.virtual.card.service.dto.CreateCardRequest;
 import com.company.virtual.card.service.dto.SpendRequest;
+import com.company.virtual.card.service.dto.SpendResponse;
+import com.company.virtual.card.service.dto.TopupResponse;
 import com.company.virtual.card.service.dto.TransactionResponse;
-import com.company.virtual.card.service.entity.Card;
 import com.company.virtual.card.service.services.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/cards")
@@ -21,39 +23,32 @@ public class CardController {
 
     private final CardService cardService;
 
-    @PostMapping
-    public ResponseEntity<Card> createCard(@Valid @RequestBody CreateCardRequest request) {
-        Card card = cardService.createCard(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(card);
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CardResponse> createCard(@Valid @RequestBody CreateCardRequest request) {
+        CardResponse cardResponse = cardService.createCard(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(cardResponse);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Card> getCard(@PathVariable Long id) {
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CardResponse> getCard(@PathVariable Long id) {
         return ResponseEntity.ok(cardService.getCard(id));
     }
 
-    @PostMapping("/{id}/spend")
-    public ResponseEntity<Map<String, Object>> spend(@PathVariable Long id, 
-                                                     @Valid @RequestBody SpendRequest request) {
-        Card updatedCard = cardService.spend(id, request.getAmount());
-        return ResponseEntity.ok(Map.of(
-            "id", updatedCard.getId(),
-            "remainingBalance", updatedCard.getBalance()
-        ));
+    @PostMapping(value = "/{id}/spend", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SpendResponse> spend(@PathVariable Long id, 
+                                                @Valid @RequestBody SpendRequest request) {
+        SpendResponse spendResponse = cardService.spend(id, request.getAmount());
+        return ResponseEntity.ok(spendResponse);
     }
 
-    @PostMapping("/{id}/topup")
-    public ResponseEntity<Map<String, Object>> topup(@PathVariable Long id, 
-                                                     @Valid @RequestBody SpendRequest request) {
-        // Reusing SpendRequest as it just contains "amount"
-        Card updatedCard = cardService.topup(id, request.getAmount());
-        return ResponseEntity.ok(Map.of(
-            "id", updatedCard.getId(),
-            "balance", updatedCard.getBalance()
-        ));
+    @PostMapping(value = "/{id}/topup", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TopupResponse> topup(@PathVariable Long id, 
+                                                @Valid @RequestBody SpendRequest request) {
+        TopupResponse topupResponse = cardService.topup(id, request.getAmount());
+        return ResponseEntity.ok(topupResponse);
     }
 
-    @GetMapping("/{id}/transactions")
+    @GetMapping(value = "/{id}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<TransactionResponse>> getTransactions(@PathVariable Long id) {
         return ResponseEntity.ok(cardService.getTransactions(id));
     }

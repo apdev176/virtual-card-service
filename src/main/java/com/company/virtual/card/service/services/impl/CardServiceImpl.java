@@ -1,6 +1,9 @@
 package com.company.virtual.card.service.services.impl;
 
+import com.company.virtual.card.service.dto.CardResponse;
 import com.company.virtual.card.service.dto.CreateCardRequest;
+import com.company.virtual.card.service.dto.SpendResponse;
+import com.company.virtual.card.service.dto.TopupResponse;
 import com.company.virtual.card.service.dto.TransactionResponse;
 import com.company.virtual.card.service.entity.Card;
 import com.company.virtual.card.service.entity.CardTransaction;
@@ -27,7 +30,7 @@ public class CardServiceImpl implements CardService {
     private final TransactionRepository transactionRepository;
 
     @Transactional
-    public Card createCard(CreateCardRequest request) {
+    public CardResponse createCard(CreateCardRequest request) {
         log.info("Creating new card for user: {}", request.getCardholderName());
 
         Card card = Card.builder()
@@ -43,22 +46,23 @@ public class CardServiceImpl implements CardService {
             log.info("Initial balance credited for Card ID: {}", savedCard.getId());
         }
 
-        return savedCard;
+        return convertToCardResponse(savedCard);
     }
 
-    public Card getCard(Long id) {
-        return cardRepository.findById(id)
+    public CardResponse getCard(Long id) {
+        Card card = cardRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Card lookup failed for ID: {}", id);
                     return new NoSuchElementException("Card not found with ID: " + id);
                 });
+        return convertToCardResponse(card);
     }
 
     @Transactional
-    public Card spend(Long cardId, BigDecimal amount) {
+    public SpendResponse spend(Long cardId, BigDecimal amount) {
         log.info("Processing spend request. CardID: {}, Amount: {}", cardId, amount);
         
-        Card card = getCard(cardId);
+        Card card = findCardById(cardId);
 
         //Strict Overdraft Check
         if (card.getBalance().compareTo(amount) < 0) {
@@ -74,14 +78,17 @@ public class CardServiceImpl implements CardService {
         recordTransaction(savedCard, amount, TransactionType.DEBIT);
         
         log.info("Spend successful. New Balance: {}", newBalance);
-        return savedCard;
+        return SpendResponse.builder()
+                .id(savedCard.getId())
+                .remainingBalance(savedCard.getBalance())
+                .build();
     }
 
     @Transactional
-    public Card topup(Long cardId, BigDecimal amount) {
+    public TopupResponse topup(Long cardId, BigDecimal amount) {
         log.info("Processing top-up. CardID: {}, Amount: {}", cardId, amount);
 
-        Card card = getCard(cardId);
+        Card card = findCardById(cardId);
         
         BigDecimal newBalance = card.getBalance().add(amount);
         card.setBalance(newBalance);
@@ -90,7 +97,10 @@ public class CardServiceImpl implements CardService {
         recordTransaction(savedCard, amount, TransactionType.CREDIT);
         
         log.info("Top-up successful. New Balance: {}", newBalance);
-        return savedCard;
+        return TopupResponse.builder()
+                .id(savedCard.getId())
+                .balance(savedCard.getBalance())
+                .build();
     }
 
     public List<TransactionResponse> getTransactions(Long cardId) {
@@ -99,12 +109,10 @@ public class CardServiceImpl implements CardService {
         }
         
         List<CardTransaction> transactions = transactionRepository.findByCardIdOrderByTimestampDesc(cardId);
-        
-        // Convert entities to DTOs - no lazy loading issues!
+
         return transactions.stream()
                 .map(txn -> TransactionResponse.builder()
                         .id(txn.getId())
-                        .cardId(cardId)
                         .amount(txn.getAmount())
                         .type(txn.getType())
                         .timestamp(txn.getTimestamp())
@@ -120,5 +128,24 @@ public class CardServiceImpl implements CardService {
                 .type(type)
                 .build();
         transactionRepository.save(transaction);
+    }
+
+    // Helper method to find card by ID (returns entity for internal use)
+    private Card findCardById(Long id) {
+        return cardRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Card lookup failed for ID: {}", id);
+                    return new NoSuchElementException("Card not found with ID: " + id);
+                });
+    }
+
+    // Helper method to convert Card entity to CardResponse DTO
+    private CardResponse convertToCardResponse(Card card) {
+        return CardResponse.builder()
+                .id(card.getId())
+                .cardholderName(card.getCardholderName())
+                .balance(card.getBalance())
+                .createdAt(card.getCreatedAt())
+                .build();
     }
 }
