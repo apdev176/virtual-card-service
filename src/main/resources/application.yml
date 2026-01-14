@@ -7,8 +7,8 @@ spring:
 # Server port
 server:
   port: ${SERVER_PORT:8080}
-  servlet:
-    context-path: /api/virtual-card
+#  servlet:
+#    context-path: /api/virtual-card
 
 # Default logging
 logging:
