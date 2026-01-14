@@ -2,6 +2,11 @@
 
 A robust, production-ready backend service for managing virtual cards, designed with financial data consistency and concurrency control at its core.
 
+## 📂 Project Documentation
+
+- **[TEST_PLAN.md](TEST_PLAN.md)** - Comprehensive testing strategy and test scenarios
+- **[COMMIT_HISTORY.md](COMMIT_HISTORY.md)** - Git commit timeline showing development progression
+
 ## 🛠 Tech Stack & Tools
 * **Language:** Java 17 (LTS)
 * **Framework:** Spring Boot 3.5
